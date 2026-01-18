@@ -7,4 +7,4 @@
 data/certs/
 *.pem
 *.crt
-*.key
+*.keynode_modules/
