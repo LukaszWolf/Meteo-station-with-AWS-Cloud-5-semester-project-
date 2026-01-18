@@ -14,7 +14,7 @@
 #include "SensorManager.h"
 #include "UIManager.h"
 
-struct_message Data;             ///< ESP-NOW data buffer
+struct_message telemetryData;             ///< ESP-NOW telemetryData buffer
 float homeTemperatureRead = 0.0; ///< Local temperature
 volatile bool newDataReceived = false;
 volatile bool screenDataDirty = false;
