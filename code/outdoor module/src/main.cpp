@@ -4,7 +4,7 @@
  * * This program reads data from BME280 (I2C) and an analog UV sensor,
  * then broadcasts the data using ESP-NOW with channel scanning capability.
  * Ideally suited for battery-powered operation using Deep Sleep.
- * * @author YourName
+ * * @author Łukasz Wolf
  * @date 2023-10-27
  */
 
