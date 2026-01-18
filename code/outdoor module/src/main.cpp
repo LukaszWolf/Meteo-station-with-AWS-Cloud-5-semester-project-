@@ -80,7 +80,7 @@ typedef struct struct_message {
   uint8_t uvIndexRead;            ///< UV Raw Value (Clamped to 255)
 } struct_message;
 
-struct_message myData;
+struct_message telemetryData;
 esp_now_peer_info_t peerInfo;
 
 // Flags for async ESP-NOW callback
@@ -139,7 +139,7 @@ void setEspNowChannel(uint8_t ch) {
 }
 
 /**
- * @brief Reads sensors and populates the `myData` structure.
+ * @brief Reads sensors and populates the `telemetryData` structure.
  * * Reads Temperature, Humidity, Pressure from BME280.
  * Reads UV raw value from Analog Pin.
  * Prints debug info to Serial.
@@ -147,9 +147,9 @@ void setEspNowChannel(uint8_t ch) {
 void fillMeasurement() {
   // 1. BME280 Readings
   if (!bmpOk) {
-    myData.outdoorTemperatureRead = 0;
-    myData.pressureRead = 0;
-    myData.humidityRead = 0;
+    telemetryData.outdoorTemperatureRead = 0;
+    telemetryData.pressureRead = 0;
+    telemetryData.humidityRead = 0;
   } else {
     bme.takeForcedMeasurement();
     float temp = bme.readTemperature();
@@ -157,9 +157,9 @@ void fillMeasurement() {
     float hum = bme.readHumidity();
 
     // Formatting for transmission
-    myData.outdoorTemperatureRead = (int16_t)roundf(temp * 10.0f);
-    myData.humidityRead = (uint16_t)roundf(hum);
-    myData.pressureRead = (uint16_t)roundf(pres);
+    telemetryData.outdoorTemperatureRead = (int16_t)roundf(temp * 10.0f);
+    telemetryData.humidityRead = (uint16_t)roundf(hum);
+    telemetryData.pressureRead = (uint16_t)roundf(pres);
 
     // Debug print
     Serial.printf("Temp: %.1f C | Hum: %.1f %% | Pres: %.1f hPa\n", temp, hum,
@@ -175,9 +175,9 @@ void fillMeasurement() {
   // FIX: Safety clamp to prevent uint8_t overflow (0-255)
   // If your receiver expects raw 0-4095, you must change struct to uint16_t
   if (uvRaw > 255) {
-    myData.uvIndexRead = 255;
+    telemetryData.uvIndexRead = 255;
   } else {
-    myData.uvIndexRead = (uint8_t)uvRaw;
+    telemetryData.uvIndexRead = (uint8_t)uvRaw;
   }
 }
 
@@ -199,7 +199,7 @@ bool trySendOnChannel(uint8_t channel) {
     transmissionSuccess = false;
 
     esp_err_t result =
-        esp_now_send(broadcastAddress, (uint8_t *)&myData, sizeof(myData));
+        esp_now_send(broadcastAddress, (uint8_t *)&telemetryData, sizeof(telemetryData));
 
     if (result == ESP_OK) {
       // Wait for ACK
