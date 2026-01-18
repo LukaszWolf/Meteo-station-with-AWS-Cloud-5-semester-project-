@@ -7,13 +7,8 @@ html, body, #root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  
-  /* WYMUSZENIE DARK MODE */
   color-scheme: dark;
-  
-  /* Stały biały kolor tekstu dla całej aplikacji */
   color: rgba(255, 255, 255, 0.87);
-  
   margin: 0;
   padding: 0;
   font-synthesis: none;
@@ -26,7 +21,6 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  /* Twoje oryginalne tło */
   background: linear-gradient(180deg, #95d7df 0%, #5e74a1 50%, #95d7df 100%);
 }
 
