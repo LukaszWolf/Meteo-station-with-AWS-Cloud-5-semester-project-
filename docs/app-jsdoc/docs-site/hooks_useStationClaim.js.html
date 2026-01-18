@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: hooks/useStationClaim.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: hooks/useStationClaim.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @file useStationClaim.js
+ * @description Custom hook responsible for the "Claiming" (Pairing) process.
+ * It sends a claim request via API Gateway and listens for a confirmation
+ * message via MQTT.
+ */
+
+import {Auth, PubSub} from 'aws-amplify';
+import {useState} from 'react';
+
+/** API Gateway endpoint for the Claim Lambda function */
+const CLAIM_API_URL =
+    'https://rp6817rcg4.execute-api.eu-north-1.amazonaws.com/claim/reply';
+
+/**
+ * @function useStationClaim
+ * @description Manages the state and logic for claiming a new device.
+ *
+ * @param {Object} user - The authenticated user.
+ * @param {Function} onSuccess - Callback function to execute after successful
+ *     claiming (e.g., reload data).
+ *
+ * @returns {Object} Claim hook object containing:
+ * - thing {string}: Current input value for Thing Name.
+ * - setThing {Function}: Setter for Thing Name.
+ * - nonce {string}: Current input value for Nonce code.
+ * - setNonce {Function}: Setter for Nonce code.
+ * - claimStatus {string}: Status message.
+ * - handleClaim {Function}: Function to initiate the claim process.
+ */
+export function useStationClaim(user, onSuccess) {
+  const [thing, setThing] = useState('');
+  const [nonce, setNonce] = useState('');
+  const [claimStatus, setClaimStatus] = useState('');
+
+  const handleClaim = async () => {
+    try {
+      if (!user) {
+        setClaimStatus('Zaloguj się najpierw.');
+        return;
+      }
+      if (!thing || !nonce) {
+        setClaimStatus('Wypełnij oba pola.');
+        return;
+      }
+
+      setClaimStatus('Wysyłam kod...');
+      const dataTopic = `devices/${thing}/data`;
+      let isConfirmed = false;
+
+      // 1. Subscribe to the device's data topic to listen for the first message
+      const subscription = PubSub.subscribe(dataTopic).subscribe({
+        next: (msg) => {
+          isConfirmed = true;
+          setClaimStatus('Sparowano pomyślnie!');
+          subscription.unsubscribe();
+          if (onSuccess) onSuccess();  // Refresh dashboard data
+        },
+        error: (e) => console.error(e),
+      });
+
+      // 2. Send the claim request to the API
+      const creds = await Auth.currentCredentials();
+      let headers = {'Content-Type': 'application/json'};
+      try {
+        const session = await Auth.currentSession();
+        headers.Authorization = session.getIdToken().getJwtToken();
+      } catch {
+        // Session might be invalid or expired
+      }
+
+      await fetch(CLAIM_API_URL, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(
+            {thingName: thing, identityId: creds.identityId, nonce}),
+      });
+
+      // 3. Set a timeout to handle cases where no data is received
+      setTimeout(() => {
+        if (!isConfirmed) {
+          subscription.unsubscribe();
+          if (claimStatus !== 'Sparowano pomyślnie!') {
+            setClaimStatus('Wysłano. Czekam na dane...');
+          }
+        }
+      }, 15000);
+
+    } catch (e) {
+      setClaimStatus('Błąd: ' + e.message);
+    }
+  };
+
+  return {thing, setThing, nonce, setNonce, claimStatus, handleClaim};
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#ATTACH_API_URL">ATTACH_API_URL</a></li><li><a href="global.html#AWS_IOT_ENDPOINT">AWS_IOT_ENDPOINT</a></li><li><a href="global.html#CLAIM_API_URL">CLAIM_API_URL</a></li><li><a href="global.html#FORECAST_URL">FORECAST_URL</a></li><li><a href="global.html#GEO_URL">GEO_URL</a></li><li><a href="global.html#formatDateDDMM">formatDateDDMM</a></li><li><a href="global.html#formatDateLabel">formatDateLabel</a></li><li><a href="global.html#formatTimeHHMM">formatTimeHHMM</a></li><li><a href="global.html#getTs">getTs</a></li><li><a href="global.html#getUvLevel">getUvLevel</a></li><li><a href="global.html#getWeatherIcon">getWeatherIcon</a></li><li><a href="global.html#mapJsonToDashboardData">mapJsonToDashboardData</a></li><li><a href="global.html#sortByTs">sortByTs</a></li><li><a href="global.html#useAuth">useAuth</a></li><li><a href="global.html#useStationClaim">useStationClaim</a></li><li><a href="global.html#useStationData">useStationData</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Sun Jan 18 2026 18:43:40 GMT+0100 (czas środkowoeuropejski standardowy)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

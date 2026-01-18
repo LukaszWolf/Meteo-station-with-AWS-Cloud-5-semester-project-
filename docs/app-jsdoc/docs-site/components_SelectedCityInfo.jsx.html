@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/SelectedCityInfo.jsx</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/SelectedCityInfo.jsx</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @file SelectedCityInfo.jsx
+ * @description A container component that fetches and displays detailed weather information for a specific city.
+ * It communicates with the Open-Meteo API to get current weather, hourly, and daily forecasts.
+ */
+
+import { useEffect, useState } from "react";
+import CityWeatherPanel from "./CityWeatherPanel";
+
+/** * Base URL for the Open-Meteo Forecast API */
+const FORECAST_URL = "https://api.open-meteo.com/v1/forecast";
+
+/**
+ * Helper: Extracts "HH:MM" time string from an ISO 8601 date string.
+ * @param {string} isoString - Full ISO date string.
+ * @returns {string} Formatted time string.
+ */
+function formatTimeHHMM(isoString) {
+  if (!isoString) return "";
+  const idxT = isoString.indexOf("T");
+  if (idxT === -1) return isoString;
+  const timePart = isoString.slice(idxT + 1);
+  return timePart.slice(0, 5); // "HH:MM"
+}
+
+/**
+ * @component
+ * @description Renders current weather details (Temp, Wind, Sunrise/Sunset) and the forecast panel.
+ * Triggers a data fetch whenever the `city` prop changes.
+ *
+ * @param {Object} props
+ * @param {Object|null} props.city - The selected city object containing geographical coordinates.
+ * @param {string} props.city.name - City name.
+ * @param {string} props.city.country - Country name.
+ * @param {number} props.city.latitude - Latitude for API request.
+ * @param {number} props.city.longitude - Longitude for API request.
+ *
+ * @returns {JSX.Element} The weather details view.
+ */
+export default function SelectedCityInfo({ city }) {
+  const [weather, setWeather] = useState(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [weatherError, setWeatherError] = useState("");
+
+  /**
+   * Effect: Fetches weather data from Open-Meteo API when `city` updates.
+   */
+  useEffect(() => {
+    if (!city) {
+      setWeather(null);
+      setWeatherError("");
+      return;
+    }
+
+    const params = new URLSearchParams({
+      latitude: String(city.latitude),
+      longitude: String(city.longitude),
+      current_weather: "true",
+      hourly: "temperature_2m,relative_humidity_2m,weathercode",
+      daily:
+        "temperature_2m_max,temperature_2m_min,sunrise,sunset,weathercode",
+      timezone: "auto",
+      forecast_days: "10",
+    });
+
+    const url = `${FORECAST_URL}?${params.toString()}`;
+
+    setWeatherLoading(true);
+    setWeatherError("");
+
+    fetch(url)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Błąd pobierania pogody");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setWeather(data);
+      })
+      .catch((err) => {
+        console.error(err);
+        setWeather(null);
+        setWeatherError(String(err));
+      })
+      .finally(() => {
+        setWeatherLoading(false);
+      });
+  }, [city]);
+
+  if (!city) {
+    return &lt;p>Nie wybrano miasta.&lt;/p>;
+  }
+
+  // --- Calculate sunrise/sunset for the current day ---
+  let todaySunrise = null;
+  let todaySunset = null;
+
+  if (
+    weather &amp;&amp;
+    weather.daily &amp;&amp;
+    weather.daily.time &amp;&amp;
+    weather.daily.sunrise &amp;&amp;
+    weather.daily.sunset &amp;&amp;
+    weather.current_weather?.time
+  ) {
+    // Find the index corresponding to today's date in the daily forecast array
+    const currentDate = weather.current_weather.time.slice(0, 10); // "YYYY-MM-DD"
+    const idx = weather.daily.time.findIndex((d) => d === currentDate);
+    if (idx !== -1) {
+      todaySunrise = weather.daily.sunrise[idx] || null;
+      todaySunset = weather.daily.sunset[idx] || null;
+    }
+  }
+
+  return (
+    &lt;div style={{ marginTop: 16 }}>
+      &lt;h3 className="selected-city-title">
+        Wybrane miasto:{" "}
+        &lt;span>
+          {city.name}, {city.country}
+          {city.admin1 ? ` (${city.admin1})` : ""}
+        &lt;/span>
+      &lt;/h3>
+
+      {weatherLoading &amp;&amp; &lt;p>Ładuję pogodę...&lt;/p>}
+      {weatherError &amp;&amp; (
+        &lt;p style={{ color: "red" }}>Błąd pobierania pogody: {weatherError}&lt;/p>
+      )}
+
+      {weather &amp;&amp; weather.current_weather &amp;&amp; (
+        &lt;div>
+          &lt;p>Aktualna temperatura: {weather.current_weather.temperature} °C&lt;/p>
+          &lt;p>Wiatr: {weather.current_weather.windspeed} km/h&lt;/p>
+
+          {todaySunrise &amp;&amp; todaySunset &amp;&amp; (
+            &lt;>
+              &lt;p>Wschód słońca: {formatTimeHHMM(todaySunrise)}&lt;/p>
+              &lt;p>Zachód słońca: {formatTimeHHMM(todaySunset)}&lt;/p>
+            &lt;/>
+          )}
+        &lt;/div>
+      )}
+
+      {/* Render detailed forecast panel */}
+      &lt;CityWeatherPanel weather={weather} />
+    &lt;/div>
+  );
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#ATTACH_API_URL">ATTACH_API_URL</a></li><li><a href="global.html#AWS_IOT_ENDPOINT">AWS_IOT_ENDPOINT</a></li><li><a href="global.html#CLAIM_API_URL">CLAIM_API_URL</a></li><li><a href="global.html#FORECAST_URL">FORECAST_URL</a></li><li><a href="global.html#GEO_URL">GEO_URL</a></li><li><a href="global.html#formatDateDDMM">formatDateDDMM</a></li><li><a href="global.html#formatDateLabel">formatDateLabel</a></li><li><a href="global.html#formatTimeHHMM">formatTimeHHMM</a></li><li><a href="global.html#getTs">getTs</a></li><li><a href="global.html#getUvLevel">getUvLevel</a></li><li><a href="global.html#getWeatherIcon">getWeatherIcon</a></li><li><a href="global.html#mapJsonToDashboardData">mapJsonToDashboardData</a></li><li><a href="global.html#sortByTs">sortByTs</a></li><li><a href="global.html#useAuth">useAuth</a></li><li><a href="global.html#useStationClaim">useStationClaim</a></li><li><a href="global.html#useStationData">useStationData</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Sun Jan 18 2026 18:43:40 GMT+0100 (czas środkowoeuropejski standardowy)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

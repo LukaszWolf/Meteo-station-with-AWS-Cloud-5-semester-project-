@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: App.jsx</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: App.jsx</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @file App.jsx
+ * @description Main entry point for the Cloud Meteo Station web application.
+ * This file is responsible for:
+ * 1. Configuring AWS Amplify and AWS IoT PubSub providers.
+ * 2. Managing global authentication state via the `useAuth` hook.
+ * 3. Orchestrating data fetching and station pairing via custom hooks.
+ * 4. Rendering the main layout based on the user's authentication status (Guest vs. Logged In).
+ *
+ * @author Łukasz Wolf
+ */
+
+import { Amplify } from "aws-amplify";
+import { AWSIoTProvider } from "@aws-amplify/pubsub";
+import awsconfig from "./aws-exports";
+
+// UI Components
+import NavBar from "./components/NavBar";
+import Landing from "./components/Landing";
+import Footer from "./components/Footer";
+import WeatherDashboard from "./components/WeatherDashboard";
+import StationClaimPanel from "./components/StationClaimPanel";
+import CitySearch from "./components/CitySearch";
+import HistoryPanel from "./components/HistoryPanel";
+
+// Global Styles
+import "./App.css";
+import "./NavBar.css";
+import "./Landing.css";
+import "./Footer.css";
+import "./WeatherDashboard.css";
+import "./CitySearch.css";
+
+// Custom Hooks (Business Logic)
+import { useAuth } from "./hooks/useAuth";
+import { useStationData } from "./hooks/useStationData";
+import { useStationClaim } from "./hooks/useStationClaim";
+
+// --- AWS CONFIGURATION ---
+
+/**
+ * Configure AWS Amplify with the auto-generated aws-exports file.
+ * This setups Cognito User Pools and Identity Pools.
+ */
+Amplify.configure(awsconfig);
+
+/**
+ * Configure the AWS IoT PubSub provider over WebSockets (WSS).
+ * This allows the app to subscribe to MQTT topics for real-time data.
+ *
+ * @constant {string} AWS_IOT_ENDPOINT - The specific AWS IoT endpoint for your region.
+ */
+Amplify.addPluggable(new AWSIoTProvider({
+  aws_pubsub_region: "eu-north-1",
+  aws_pubsub_endpoint: "wss://an7hi8lzvqru3-ats.iot.eu-north-1.amazonaws.com/mqtt",
+}));
+
+/**
+ * @component
+ * @description The root component of the application.
+ * It serves as a container for the UI and delegates logic to custom hooks.
+ *
+ * @returns {JSX.Element} The rendered application layout.
+ */
+export default function App() {
+  /**
+   * 1. Authentication Hook
+   * Handles user login/logout sessions and hub events.
+   */
+  const { user, signIn, signOut } = useAuth();
+
+  /**
+   * 2. Station Data Hook
+   * Fetches historical data from S3 and current measurements.
+   * Only active if a user is logged in.
+   */
+  const { history, measurement, reloadData } = useStationData(user);
+
+  /**
+   * 3. Station Claiming Hook
+   * Manages the logic for pairing a new ESP32 device with the user's account via MQTT/API.
+   * Calls `reloadData` upon successful claiming to refresh the dashboard.
+   */
+  const claim = useStationClaim(user, reloadData);
+
+  // --- CONDITIONAL RENDERING ---
+
+  // Render Landing Page for guests (unauthenticated users)
+  if (!user) {
+    return (
+      &lt;div>
+        &lt;NavBar LogoutLoginText="Zaloguj się" onAuthClick={signIn} />
+        &lt;Landing onSignIn={signIn} />
+        &lt;Footer />
+      &lt;/div>
+    );
+  }
+
+  // Render Main Dashboard for authenticated users
+  return (
+    &lt;div>
+      &lt;NavBar LogoutLoginText="Wyloguj się" onAuthClick={signOut} />
+      
+      {/* Section: Live Data Dashboard */}
+      &lt;section id="live-data" className="page-section">
+        {measurement &amp;&amp; &lt;WeatherDashboard data={measurement} />}
+      &lt;/section>
+    
+      {/* Section: Weather Forecast (Open-Meteo) */}
+      &lt;section id="forecast" className="page-section">
+        &lt;CitySearch />
+      &lt;/section>
+
+      {/* Section: Historical Data Charts */}
+      &lt;section id="history" className="page-section">
+        &lt;HistoryPanel history={history} />
+      &lt;/section>
+
+      {/* Section: Device Pairing Form */}
+      &lt;section id="pairing" className="page-section">
+        &lt;StationClaimPanel 
+          thing={claim.thing}
+          setThing={claim.setThing}
+          nonce={claim.nonce}
+          setNonce={claim.setNonce}
+          handleClaim={claim.handleClaim}
+          claimStatus={claim.claimStatus}
+        />
+      &lt;/section>
+      
+      &lt;Footer/>
+    &lt;/div>
+  );
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#ATTACH_API_URL">ATTACH_API_URL</a></li><li><a href="global.html#AWS_IOT_ENDPOINT">AWS_IOT_ENDPOINT</a></li><li><a href="global.html#CLAIM_API_URL">CLAIM_API_URL</a></li><li><a href="global.html#FORECAST_URL">FORECAST_URL</a></li><li><a href="global.html#GEO_URL">GEO_URL</a></li><li><a href="global.html#formatDateDDMM">formatDateDDMM</a></li><li><a href="global.html#formatDateLabel">formatDateLabel</a></li><li><a href="global.html#formatTimeHHMM">formatTimeHHMM</a></li><li><a href="global.html#getTs">getTs</a></li><li><a href="global.html#getUvLevel">getUvLevel</a></li><li><a href="global.html#getWeatherIcon">getWeatherIcon</a></li><li><a href="global.html#mapJsonToDashboardData">mapJsonToDashboardData</a></li><li><a href="global.html#sortByTs">sortByTs</a></li><li><a href="global.html#useAuth">useAuth</a></li><li><a href="global.html#useStationClaim">useStationClaim</a></li><li><a href="global.html#useStationData">useStationData</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Sun Jan 18 2026 18:43:40 GMT+0100 (czas środkowoeuropejski standardowy)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

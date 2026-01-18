@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/CitySearch.jsx</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/CitySearch.jsx</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @file CitySearch.jsx
+ * @description A container component for searching locations via Open-Meteo Geocoding API.
+ * It handles the search state, debouncing, and fetching logic.
+ */
+
+import { useEffect, useState, useRef } from "react";
+import CitySearchInput from "./CitySearchInput";
+import CitySuggestionsList from "./CitySuggestionsList";
+import SelectedCityInfo from "./SelectedCityInfo";
+
+/** * Open-Meteo Geocoding API endpoint 
+ * @constant {string}
+ */
+const GEO_URL = "https://geocoding-api.open-meteo.com/v1/search";
+
+/**
+ * @component
+ * @description Orchestrates the city search workflow.
+ * Features:
+ * - Input field for typing city name.
+ * - Debounced API calls to prevent flooding the server.
+ * - Displays a list of suggestions.
+ * - Shows weather details for the selected city.
+ *
+ * @returns {JSX.Element} The complete weather forecast section.
+ */
+export default function CitySearch() {
+  const [query, setQuery] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [selectedCity, setSelectedCity] = useState(null);
+  
+  /** * Ref to store the timeout ID for the debounce logic. 
+   * Allows clearing the timeout across re-renders without triggering new ones.
+   */
+  const debounceRef = useRef(null);
+
+  /**
+   * Effect handles the debounced search logic.
+   * Triggers API call only after the user stops typing for 500ms.
+   */
+  useEffect(() => {
+    // Clear previous timer on every keystroke to reset the countdown
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    const trimmed = query.trim();
+
+    if (trimmed.length &lt; 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    // Set new timer
+    debounceRef.current = setTimeout(() => {
+      const url = `${GEO_URL}?name=${encodeURIComponent(trimmed)}&amp;count=5&amp;language=pl&amp;format=json`;
+
+      fetch(url)
+        .then((res) => {
+          if (!res.ok) throw new Error("Error fetching city suggestions");
+          return res.json();
+        })
+        .then((data) => {
+          setSuggestions(data.results || []);
+        })
+        .catch((err) => {
+          console.error(err);
+          setSuggestions([]);
+        });
+    }, 500); // 500ms delay
+
+    // Cleanup function: clears timer if component unmounts
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [query]);
+
+  return (
+    &lt;section className="city-search-section">
+      &lt;div className="city-search-card">
+        &lt;div className="city-search-header">
+          &lt;div>
+            &lt;h2 className="city-search-title">Prognoza pogody&lt;/h2>
+            &lt;p className="city-search-subtitle">
+              Wyszukaj miejscowość i sprawdź prognozę godzinową oraz dzienną.
+            &lt;/p>
+          &lt;/div>
+        &lt;/div>
+
+        &lt;div className="city-search-input-row">
+          &lt;CitySearchInput
+            query={query}
+            onChange={(newQuery) => setQuery(newQuery)}
+          />
+          &lt;CitySuggestionsList
+            suggestions={suggestions}
+            onSelect={(city) => {
+              console.log("Selected city:", city);
+              setSelectedCity(city);
+              setSuggestions([]); // Clear suggestions after selection
+            }}
+          />
+        &lt;/div>
+
+        &lt;div className="selected-city-wrapper">
+          &lt;SelectedCityInfo city={selectedCity} />
+        &lt;/div>
+      &lt;/div>
+    &lt;/section>
+  );
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#ATTACH_API_URL">ATTACH_API_URL</a></li><li><a href="global.html#AWS_IOT_ENDPOINT">AWS_IOT_ENDPOINT</a></li><li><a href="global.html#CLAIM_API_URL">CLAIM_API_URL</a></li><li><a href="global.html#FORECAST_URL">FORECAST_URL</a></li><li><a href="global.html#GEO_URL">GEO_URL</a></li><li><a href="global.html#formatDateDDMM">formatDateDDMM</a></li><li><a href="global.html#formatDateLabel">formatDateLabel</a></li><li><a href="global.html#formatTimeHHMM">formatTimeHHMM</a></li><li><a href="global.html#getTs">getTs</a></li><li><a href="global.html#getUvLevel">getUvLevel</a></li><li><a href="global.html#getWeatherIcon">getWeatherIcon</a></li><li><a href="global.html#mapJsonToDashboardData">mapJsonToDashboardData</a></li><li><a href="global.html#sortByTs">sortByTs</a></li><li><a href="global.html#useAuth">useAuth</a></li><li><a href="global.html#useStationClaim">useStationClaim</a></li><li><a href="global.html#useStationData">useStationData</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Sun Jan 18 2026 18:43:40 GMT+0100 (czas środkowoeuropejski standardowy)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

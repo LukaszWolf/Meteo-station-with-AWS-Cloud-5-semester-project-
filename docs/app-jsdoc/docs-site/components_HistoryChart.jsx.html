@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/HistoryChart.jsx</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/HistoryChart.jsx</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @file HistoryChart.jsx
+ * @description A reusable SVG line chart component designed to visualize temperature trends.
+ * It features a gradient area fill, data points with values, and automatic horizontal scrolling 
+ * to the most recent data point.
+ */
+
+import { useMemo, useRef, useEffect } from "react";
+
+/**
+ * Helper: Extracts the timestamp from a data point.
+ * Handles different property names ('ts' or 'lastUpdate') for compatibility.
+ * @param {Object} m - Data point object.
+ * @returns {number|null} Timestamp in milliseconds or null.
+ */
+function getTs(m) { return m.ts ?? m.lastUpdate ?? null; }
+
+/**
+ * Helper: Sorts the history array chronologically (oldest to newest).
+ * @param {Array&lt;Object>} history - Array of unsorted data points.
+ * @returns {Array&lt;Object>} Sorted array.
+ */
+function sortByTs(history) {
+  return [...history].sort((a, b) => (getTs(a) ?? 0) - (getTs(b) ?? 0));
+}
+
+/**
+ * Helper: Formats timestamp to "HH:MM" string.
+ * @param {number} ts - Timestamp.
+ * @returns {string} Formatted time string.
+ */
+function formatTimeHHMM(ts) {
+  if (ts == null) return "";
+  const d = new Date(ts);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+/**
+ * Helper: Formats timestamp to "DD.MM" string.
+ * @param {number} ts - Timestamp.
+ * @returns {string} Formatted date string.
+ */
+function formatDateDDMM(ts) {
+  if (ts == null) return "";
+  const d = new Date(ts);
+  return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+/**
+ * @component
+ * @description Renders a scrollable SVG line chart with a gradient fill.
+ *
+ * @param {Object} props
+ * @param {Array&lt;Object>} props.history - Array of historical data objects.
+ * @param {string} props.dataKey - The key in the data object to visualize (e.g., 'outdoorTemp').
+ * @param {string} [props.color="#4f8cff"] - Hex color code for the line and points.
+ * @param {string} [props.title] - Optional title displayed above the chart.
+ * @param {string} props.gradientId - Unique ID for the SVG gradient definition (must be unique per chart instance).
+ *
+ * @returns {JSX.Element|null} The chart component or null if there is insufficient data (&lt; 2 points).
+ */
+export default function HistoryChart({ 
+  history, 
+  dataKey, 
+  color = "#4f8cff", 
+  title, 
+  gradientId 
+}) {
+  const scrollRef = useRef(null);
+  
+  // 1. Memoize sorted data to prevent unnecessary re-sorting on every render
+  const ordered = useMemo(() => sortByTs(history || []), [history]);
+  
+  // 2. Map data to a simplified structure { ts, val } based on the dynamic dataKey
+  const points = useMemo(() => {
+    return ordered.map(m => ({
+      ts: getTs(m),
+      val: m[dataKey] // e.g. m.outdoorTemp or m.indoorTemp
+    })).filter(p => p.ts != null &amp;&amp; p.val != null);
+  }, [ordered, dataKey]);
+
+  // Effect: Automatically scroll the container to the far right (newest data) when points change
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+    }
+  }, [points]);
+
+  if (points.length &lt; 2) return null;
+
+  // --- Chart Scaling Logic ---
+  const values = points.map(p => p.val);
+  const minV = Math.min(...values) - 1; // Add buffer to bottom
+  const maxV = Math.max(...values) + 1; // Add buffer to top
+  const range = maxV - minV || 1;
+
+  const pointSpacing = 70; // Horizontal pixels per data point
+  const height = 260;
+  const paddingSide = 50;
+  const paddingTopBottom = 60;
+  const chartWidth = Math.max(points.length * pointSpacing, 800); 
+  const width = chartWidth + paddingSide * 2;
+  const chartHeight = height - paddingTopBottom * 2;
+
+  // Coordinate mapping functions
+  const getX = (i) => paddingSide + (i * (chartWidth / (points.length - 1)));
+  const getY = (v) => height - paddingTopBottom - ((v - minV) / range) * chartHeight;
+
+  // --- SVG Path Generation ---
+  // Line path
+  const pathData = points.reduce((acc, p, i) => 
+    `${acc} ${i === 0 ? 'M' : 'L'} ${getX(i)} ${getY(p.val)}`, "");
+  
+  // Area path (closed loop for gradient fill)
+  const areaData = `${pathData} L ${getX(points.length - 1)} ${height - paddingTopBottom} L ${paddingSide} ${height - paddingTopBottom} Z`;
+
+  return (
+    &lt;div style={{ marginBottom: "30px" }}>
+      {title &amp;&amp; (
+        &lt;h3 style={{ fontSize: "14px", fontWeight: "600", opacity: 0.8, marginBottom: "12px", color: "#fff" }}>
+          {title}
+        &lt;/h3>
+      )}
+      
+      &lt;div 
+        ref={scrollRef}
+        style={{ 
+          width: "100%", 
+          overflowX: "auto", 
+          cursor: "grab",
+          WebkitOverflowScrolling: "touch",
+          scrollbarWidth: "thin",
+          scrollbarColor: `${color}33 transparent`, // Hex color + alpha for scrollbar
+          paddingBottom: "10px"
+        }}
+      >
+        &lt;svg viewBox={`0 0 ${width} ${height}`} style={{ width: `${width}px`, height: `${height}px`, display: "block" }}>
+          &lt;defs>
+            &lt;linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              &lt;stop offset="0%" stopColor={color} stopOpacity="0.4" />
+              &lt;stop offset="100%" stopColor={color} stopOpacity="0" />
+            &lt;/linearGradient>
+          &lt;/defs>
+          
+          {/* Baseline (lowest value) */}
+          &lt;line x1={0} y1={getY(minV)} x2={width} y2={getY(minV)} stroke="rgba(255,255,255,0.05)" />
+          
+          &lt;path d={areaData} fill={`url(#${gradientId})`} />
+          &lt;path d={pathData} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+
+          {points.map((p, i) => {
+            const dateObj = new Date(p.ts);
+            const prevDateObj = i > 0 ? new Date(points[i - 1].ts) : null;
+            // Show date label only when the day changes
+            const showDate = i === 0 || (dateObj.getDate() !== prevDateObj?.getDate());
+
+            return (
+              &lt;g key={i}>
+                {showDate &amp;&amp; i !== 0 &amp;&amp; (
+                  &lt;line x1={getX(i)} y1={paddingTopBottom} x2={getX(i)} y2={height - paddingTopBottom} stroke="rgba(255,255,255,0.1)" strokeDasharray="4" />
+                )}
+                
+                &lt;circle cx={getX(i)} cy={getY(p.val)} r="4" fill={color} />
+                
+                {/* Value Label */}
+                &lt;text x={getX(i)} y={getY(p.val) - 15} fill="#fff" fontSize="13" textAnchor="middle" fontWeight="bold">
+                  {p.val.toFixed(1)}°
+                &lt;/text>
+                
+                {/* Time Label */}
+                &lt;text x={getX(i)} y={height - 35} fill="rgba(255,255,255,0.5)" fontSize="11" textAnchor="middle">
+                  {formatTimeHHMM(p.ts)}
+                &lt;/text>
+                
+                {/* Date Label (Conditional) */}
+                {showDate &amp;&amp; (
+                  &lt;text x={getX(i)} y={height - 15} fill={color} fontSize="12" textAnchor="middle" fontWeight="bold">
+                    {formatDateDDMM(p.ts)}
+                  &lt;/text>
+                )}
+              &lt;/g>
+            );
+          })}
+        &lt;/svg>
+      &lt;/div>
+    &lt;/div>
+  );
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#ATTACH_API_URL">ATTACH_API_URL</a></li><li><a href="global.html#AWS_IOT_ENDPOINT">AWS_IOT_ENDPOINT</a></li><li><a href="global.html#CLAIM_API_URL">CLAIM_API_URL</a></li><li><a href="global.html#FORECAST_URL">FORECAST_URL</a></li><li><a href="global.html#GEO_URL">GEO_URL</a></li><li><a href="global.html#formatDateDDMM">formatDateDDMM</a></li><li><a href="global.html#formatDateLabel">formatDateLabel</a></li><li><a href="global.html#formatTimeHHMM">formatTimeHHMM</a></li><li><a href="global.html#getTs">getTs</a></li><li><a href="global.html#getUvLevel">getUvLevel</a></li><li><a href="global.html#getWeatherIcon">getWeatherIcon</a></li><li><a href="global.html#mapJsonToDashboardData">mapJsonToDashboardData</a></li><li><a href="global.html#sortByTs">sortByTs</a></li><li><a href="global.html#useAuth">useAuth</a></li><li><a href="global.html#useStationClaim">useStationClaim</a></li><li><a href="global.html#useStationData">useStationData</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Sun Jan 18 2026 18:43:40 GMT+0100 (czas środkowoeuropejski standardowy)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
