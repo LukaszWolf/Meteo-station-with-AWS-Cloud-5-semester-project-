@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Meteo – Wi-Fi Configuration</title>
+  <style>
+    /* --- Variables & Reset --- */
+    :root {
+      --bg: #0e7afe;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+
+    body {
+      padding: 16px;
+      background: #f6f7fb;
+    }
+
+    /* --- Layout --- */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    footer {
+      margin-top: 14px;
+      font-size: 12px;
+      color: #777;
+      text-align: center;
+    }
+
+    /* --- Components: Cards & Forms --- */
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: #555;
+      margin: 8px 0 4px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #d6d8df;
+      border-radius: 10px;
+      font-size: 15px;
+      box-sizing: border-box;
+    }
+
+    /* --- Buttons --- */
+    button {
+      padding: 10px 14px;
+      border: 0;
+      border-radius: 10px;
+      background: var(--bg);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    .ssidbtn {
+      background: #eef4ff;
+      color: #0f3b8f;
+      border: 0;
+      border-radius: 8px;
+      padding: 6px 10px;
+    }
+
+    /* --- Utility Classes --- */
+    .row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .muted {
+      color: #666;
+      font-size: 13px;
+    }
+
+    .ok {
+      color: #0a7c3a;
+    }
+
+    .err {
+      color: #b21c1c;
+    }
+
+    .center {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #777;
+    }
+
+    /* --- Network List --- */
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 8px 0 0;
+    }
+
+    li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Konfiguracja Wi-Fi</h1>
+    <span class="hint">AP: <b>Meteo-Setup</b></span>
+  </header>
+
+  <section class="card">
+    <label for="ssid">Sieć (SSID)</label>
+    <input id="ssid" autocomplete="off" placeholder="np. Dom_2G" />
+    
+    <label for="pass">Hasło</label>
+    <input id="pass" type="password" autocomplete="off" placeholder="••••••••" />
+    
+    <div class="row" style="margin-top:10px">
+      <button id="save">Zapisz i połącz</button>
+      <button id="scan" type="button" style="background:#e6e9f2;color:#222">Skanuj sieci</button>
+    </div>
+    
+    <p id="msg" class="muted">Po zapisie urządzenie zrestartuje się i spróbuje połączyć z wybraną siecią.</p>
+  </section>
+
+  <section class="card" id="scanBox" style="display:none">
+    <div class="center">
+      <strong>Dostępne sieci</strong> 
+      <span id="scanInfo" class="muted"></span>
+    </div>
+    <ul id="list"></ul>
+  </section>
+
+  <script>
+    /**
+     * @brief Helper for selecting DOM elements.
+     * @param {string} s CSS Selector.
+     * @return {Element} The matched DOM element.
+     */
+    const $ = s => document.querySelector(s);
+
+    /**
+     * @brief Displays a status notification to the user.
+     * @param {string} text Message content.
+     * @param {string} cls CSS class (e.g., 'ok', 'err') defining color.
+     */
+    function notify(text, cls='') {
+      const el = $('#msg');
+      el.className = 'muted ' + cls;
+      el.textContent = text;
+    }
+
+    /**
+     * @brief SAVE button handler.
+     * Sends form data to the POST /api/save endpoint.
+     */
+    $('#save').onclick = async () => {
+      const ssid = $('#ssid').value.trim();
+      const pass = $('#pass').value;
+
+      if (!ssid) { 
+        notify('Podaj nazwę sieci (SSID).', 'err'); 
+        return; 
+      }
+
+      $('#save').disabled = true;
+      notify('Zapisuję…');
+
+      try {
+        // Prepare FormData (handled by NetworkManager.cpp)
+        const fd = new FormData();
+        fd.append('ssid', ssid);
+        fd.append('pass', pass);
+
+        const r = await fetch('/api/save', { method: 'POST', body: fd, cache: 'no-store' });
+        
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        
+        const j = await r.json();
+        
+        if (j.ok) {
+          notify('Zapisano. Urządzenie restartuje się…', 'ok');
+        } else {
+          notify('Błąd zapisu: ' + (j.err || 'nieznany'), 'err');
+          $('#save').disabled = false;
+        }
+      } catch (e) {
+        notify('Błąd połączenia z urządzeniem.', 'err');
+        $('#save').disabled = false;
+      }
+    };
+
+    /**
+     * @brief SCAN button handler.
+     * Fetches the network list from GET /api/scan and renders the HTML list.
+     */
+    $('#scan').onclick = async () => {
+      $('#scanBox').style.display = 'block';
+      $('#scanInfo').textContent = ' (szukam…)';
+      $('#list').innerHTML = '';
+
+      try {
+        const r = await fetch('/api/scan', { cache: 'no-store' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+
+        // Expected format: [{ssid: "Name", rssi: -50, enc: true}, ...]
+        const arr = await r.json();
+
+        $('#scanInfo').textContent = `(${arr.length})`;
+
+        // Render HTML list
+        $('#list').innerHTML = arr.map(o =>
+          `<li>
+             <span>
+               ${o.ssid || '<i>ukryta</i>'} 
+               <small class="muted">${o.rssi} dBm ${o.enc ? '' : ''}</small>
+             </span>
+             <button class="ssidbtn" data-ssid="${o.ssid}">Wybierz</button>
+           </li>`
+        ).join('');
+
+        // Attach events to dynamically created "Select" buttons
+        document.querySelectorAll('.ssidbtn').forEach(btn => {
+          btn.onclick = () => { $('#ssid').value = btn.dataset.ssid || ''; };
+        });
+
+      } catch (e) {
+        $('#scanInfo').textContent = '';
+        $('#list').innerHTML = '<li class="err">Błąd skanowania.</li>';
+      }
+    };
+  </script>
+</body>
+</html>

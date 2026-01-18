@@ -1,0 +1,133 @@
+.dash-main-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 16px 40px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)); 
+  gap: 20px;
+  color: inherit;
+}
+
+@media (max-width: 900px) {
+  .dash-main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dash-card {
+
+  background: rgba(11, 18, 32, 0.82);
+  border: 1px solid rgba(125, 140, 160, 0.28);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  color: #f9fafb;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+}
+
+.dash-outdoor::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 5px;
+  background: linear-gradient(to bottom, #38bdf8, #2563eb);
+}
+
+.dash-indoor::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 5px;
+  background: linear-gradient(to bottom, #34d399, #3b82f6);
+}
+
+.dash-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.dash-status-dot {
+  width: 8px;
+  height: 8px;
+  background: #34d399;
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.8);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+.dash-section-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  opacity: 0.6;
+  margin: 0;
+}
+
+.dash-temp-display {
+  font-size: 52px;
+  font-weight: 800;
+  letter-spacing: -2px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-start;
+  color: #fff;
+}
+
+.dash-unit {
+  font-size: 20px;
+  margin-top: 10px;
+  margin-left: 4px;
+  opacity: 0.5;
+  font-weight: 400;
+}
+
+.dash-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 20px;
+}
+
+.dash-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dash-detail-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.5;
+}
+
+.dash-detail-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: #f3f4f6;
+}
+
+@media (max-width: 600px) {
+  .dash-card {
+    padding: 20px;
+  }
+
+  .dash-temp-display {
+    font-size: 42px;
+  }
+
+  .dash-details-grid {
+    grid-template-columns: 1fr 1fr; 
+  }
+}

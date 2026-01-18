@@ -1,0 +1,72 @@
+.station-claim-section {
+  max-width: 1100px;
+  margin: 24px auto 40px;
+  padding: 0 16px;
+  box-sizing: border-box; 
+}
+
+.station-form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+  width: 100%;
+}
+
+.claim-input-group {
+  display: flex;
+  flex-direction: column;
+  width: 100%; 
+}
+
+.claim-label {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-bottom: 6px;
+  display: block;
+}
+
+
+.city-search-input {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+
+@media (min-width: 768px) {
+  .station-form-grid {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: flex-start;
+  }
+
+  .claim-input-group {
+    flex: 0 1 300px; 
+  }
+
+  .claim-button {
+    flex: 0 0 auto; 
+    min-width: 160px;
+  }
+}
+
+.claim-status-box {
+  margin-top: 20px;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.claim-status-box.error {
+  border-color: rgba(255, 100, 100, 0.5);
+  color: #ffaaaa;
+  background: rgba(255, 0, 0, 0.05);
+}
+
+.claim-status-box.success {
+  border-color: rgba(100, 255, 100, 0.5);
+  color: #aaffaa;
+  background: rgba(0, 255, 0, 0.05);
+}

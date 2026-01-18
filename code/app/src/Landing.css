@@ -1,0 +1,124 @@
+.landing {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+  color: inherit;
+}
+
+.hero { 
+  text-align: center;
+  padding: 32px 0 12px;
+} 
+.hero h1 {
+  font-size: clamp(26px, 5vw, 44px);
+  margin: 0 0 10px; 
+  }
+.lead {
+  margin: 0 auto 16px;
+  max-width: 800px;
+  opacity: .92; 
+}
+.cta-row {
+  display: flex; gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap; 
+}
+
+
+.section {
+  padding: 28px 0;
+ }
+.section h2 {
+  font-size: clamp(20px, 4vw, 28px);
+  margin: 0 0 12px;
+ }
+
+
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.feature-list li {
+  background: rgba(11,18,32,.5);
+  border: 1px solid rgba(125,140,160,.2);
+  border-radius: 12px;
+  padding: 12px;
+}
+@media (max-width: 1024px) {
+  .feature-list { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  .feature-list { grid-template-columns: 1fr; }
+}
+
+.steps {
+  list-style: none;          
+  padding: 0;
+  margin: 12px 0 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);  
+  gap: 12px;
+}
+.steps li {
+  background: rgba(11,18,32,.5);
+  border: 1px solid rgba(125,140,160,.2);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.steps .num {
+  width: 28px; height: 28px;
+  display: grid; place-items: center;
+  border-radius: 999px;
+  background: #4f8cff; color: #fff;
+  font-weight: 700;
+}
+
+@media (max-width: 600px) {
+  .steps { grid-template-columns: 1fr; }
+}
+
+.screenshot-placeholder {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.25);
+  border: 1px solid rgba(0,0,0,.08);
+}
+
+.muted { 
+  opacity: .7;
+  margin-top: 6px;
+  font-size: 14px;
+}
+
+.btn { 
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid transparent; 
+  cursor: pointer; 
+  text-decoration: none; 
+}
+.btn-primary { 
+  background: #4f8cff; 
+  color: #fff; 
+  font-weight: 600;
+ }
+.btn-primary:hover { 
+  filter: brightness(1.05);
+ }
+.btn-ghost { 
+  background: transparent; 
+  color: inherit; 
+  border-color: rgba(255,255,255,.25);
+ }
+.btn-ghost:hover { 
+  background: rgba(255,255,255,.07);
+ }

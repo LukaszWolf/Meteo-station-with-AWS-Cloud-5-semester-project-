@@ -1,0 +1,41 @@
+.app-footer {
+  margin-top: 36px;
+  padding: 20px 16px 12px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  border-top: 1px solid rgba(125,140,160,.25);
+  opacity: .95;
+}
+
+.gh {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: inherit;
+  text-decoration: none;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(125,140,160,.25);
+}
+.gh:hover { background: rgba(125,140,160,.12); }
+
+.footer-contact {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer-contact a {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 700;         
+}
+
+.footer-contact a:hover {
+  text-decoration: underline;
+ }
+
+.dot { opacity: .6; }
