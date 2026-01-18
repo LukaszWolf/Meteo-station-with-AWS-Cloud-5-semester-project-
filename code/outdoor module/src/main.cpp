@@ -5,7 +5,7 @@
  * then broadcasts the data using ESP-NOW with channel scanning capability.
  * Ideally suited for battery-powered operation using Deep Sleep.
  * * @author Łukasz Wolf
- * @date 2023-10-27
+ * @date 2026-01-18
  */
 
 #include "soc/rtc_cntl_reg.h"
@@ -257,7 +257,6 @@ void setup() {
   Wire.begin(SDA_PIN, SCL_PIN);
   bmpOk = bme.begin(BMP_ADDR);
 
-  // FIX: Reduced delay from 5000ms to 100ms to save battery
   delay(100);
 
   if (bmpOk) {
